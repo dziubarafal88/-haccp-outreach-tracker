@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HACCP Nexus — Outreach Tracker</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { font-family: 'DM Sans', sans-serif; }
+  .mono { font-family: 'DM Mono', monospace; }
+  :root {
+    --blue: #2563EB;
+    --blue-light: #3B82F6;
+    --dark: #1E293B;
+    --slate: #64748B;
+    --bg: #F8FAFC;
+    --border: #E2E8F0;
+  }
+  body { background: var(--bg); color: var(--dark); }
+  .tab-active { background: var(--blue); color: white; }
+  .tab-inactive { background: white; color: var(--slate); }
+  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
+  .badge-sent { background: #DBEAFE; color: #1D4ED8; }
+  .badge-no-reply { background: #F1F5F9; color: #64748B; }
+  .badge-negative { background: #FEE2E2; color: #DC2626; }
+  .badge-talking { background: #FEF9C3; color: #92400E; }
+  .badge-demo { background: #D1FAE5; color: #065F46; }
+  .badge-paying { background: #DCFCE7; color: #14532D; }
+  .badge-rejected { background: #FCE7F3; color: #9D174D; }
+  .stat-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .best { background: #F0FDF4; border: 1.5px solid #86EFAC; }
+  .worst { background: #FFF1F2; border: 1.5px solid #FECDD3; }
+  input, select, textarea { border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; width: 100%; outline: none; font-size: 14px; background: white; }
+  input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+  .btn-primary { background: var(--blue); color: white; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 14px; }
+  .btn-primary:hover { background: #1D4ED8; }
+  .btn-secondary { background: white; color: var(--dark); padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); font-size: 14px; }
+  .btn-secondary:hover { background: #F8FAFC; }
+  .btn-danger { background: #FEE2E2; color: #DC2626; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; font-size: 12px; }
+  .btn-danger:hover { background: #FECACA; }
+  .btn-edit { background: #EFF6FF; color: #2563EB; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; font-size: 12px; }
+  .btn-edit:hover { background: #DBEAFE; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #F8FAFC; color: var(--slate); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  tr:hover td { background: #F8FAFC; }
+  .daily-counter { background: linear-gradient(135deg, #1E293B 0%, #2563EB 100%); color: white; border-radius: 16px; padding: 20px 24px; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .modal { background: white; border-radius: 16px; padding: 24px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; }
+  .section-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--slate); margin-bottom: 8px; }
+  .conversion-table th { background: #1E293B; color: #94A3B8; }
+  .conversion-table td { background: white; }
+  .conversion-table tr.best-row td { background: #F0FDF4; }
+  .conversion-table tr.worst-row td { background: #FFF1F2; }
+  select.inline-select { border: none; background: transparent; padding: 0; font-size: 13px; cursor: pointer; }
+  .sort-btn { cursor: pointer; user-select: none; }
+  .sort-btn:hover { color: var(--blue); }
+  .logo { font-weight: 700; font-size: 18px; letter-spacing: -0.5px; }
+  .logo span { color: var(--blue); }
+  @media (max-width: 768px) {
+    .hide-mobile { display: none; }
+    td, th { padding: 8px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- HEADER -->
+  <header style="background:white; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:40;">
+    <div style="max-width:1200px; margin:0 auto; padding:0 16px; display:flex; align-items:center; justify-content:space-between; height:56px;">
+      <div class="logo">HACCP <span>Nexus</span> <span style="font-size:12px; font-weight:500; color:var(--slate); margin-left:8px;">Outreach</span></div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-secondary" onclick="exportCSV()" style="padding:6px 14px; font-size:13px;">📥 Eksport CSV</button>
+        <button class="btn-primary" onclick="openModal()" style="padding:6px 14px; font-size:13px;">+ Dodaj lokal</button>
+      </div>
+    </div>
+  </header>
+
+  <div style="max-width:1200px; margin:0 auto; padding:16px;">
+
+    <!-- DAILY COUNTER + QUICK STATS -->
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr 2fr; gap:12px; margin-bottom:20px;" class="stats-grid">
+      <div class="stat-card" style="grid-column: span 2 / span 2;" id="daily-card">
+        <div class="daily-counter">
+          <div style="font-size:11px; font-weight:600; opacity:0.7; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Dzisiaj wysłano</div>
+          <div style="display:flex; align-items:baseline; gap:8px;">
+            <span style="font-size:42px; font-weight:700;" id="today-count">0</span>
+            <span style="font-size:20px; opacity:0.6;">/ <span id="daily-limit-display">3</span></span>
+          </div>
+          <div style="margin-top:8px; display:flex; align-items:center; gap:8px;">
+            <div style="flex:1; height:6px; background:rgba(255,255,255,0.2); border-radius:9999px; overflow:hidden;">
+              <div id="daily-bar" style="height:100%; background:white; border-radius:9999px; transition:width 0.3s; width:0%;"></div>
+            </div>
+            <button onclick="openLimitSettings()" style="background:rgba(255,255,255,0.15); border:none; color:white; font-size:11px; padding:3px 8px; border-radius:6px; cursor:pointer;">⚙️ Limit</button>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="section-header">Wysłanych DM</div>
+        <div style="font-size:32px; font-weight:700; color:var(--dark);" id="stat-total">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="section-header">Odpowiedzi</div>
+        <div style="font-size:32px; font-weight:700; color:#2563EB;" id="stat-replies">0</div>
+        <div style="font-size:12px; color:var(--slate);" id="stat-replies-pct">0%</div>
+      </div>
+      <div class="stat-card">
+        <div class="section-header">Demo umówione</div>
+        <div style="font-size:32px; font-weight:700; color:#059669;" id="stat-demos">0</div>
+        <div style="font-size:12px; color:var(--slate);" id="stat-demos-pct">0%</div>
+      </div>
+    </div>
+
+    <!-- SECOND ROW STATS -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+      <div class="stat-card">
+        <div class="section-header">Klienci płacący</div>
+        <div style="font-size:32px; font-weight:700; color:#7C3AED;" id="stat-paying">0</div>
+        <div style="font-size:12px; color:var(--slate);" id="stat-paying-pct">0%</div>
+      </div>
+      <div class="stat-card">
+        <div class="section-header">W rozmowie</div>
+        <div style="font-size:32px; font-weight:700; color:#D97706;" id="stat-talking">0</div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div style="display:flex; gap:4px; margin-bottom:16px; background:white; padding:4px; border-radius:10px; border:1px solid var(--border); width:fit-content;">
+      <button id="tab-list" class="tab-active" onclick="switchTab('list')" style="padding:8px 20px; border-radius:8px; font-weight:600; font-size:14px; border:none; cursor:pointer; transition:all 0.2s;">📋 Lokale</button>
+      <button id="tab-stats" class="tab-inactive" onclick="switchTab('stats')" style="padding:8px 20px; border-radius:8px; font-weight:600; font-size:14px; border:none; cursor:pointer; transition:all 0.2s;">📊 Konwersje per wariant</button>
+    </div>
+
+    <!-- LIST TAB -->
+    <div id="view-list">
+      <!-- FILTERS -->
+      <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+        <select id="filter-status" onchange="renderTable()" style="width:auto; flex:none; font-size:13px; padding:7px 12px;">
+          <option value="">Wszystkie statusy</option>
+          <option value="wysłano">Wysłano</option>
+          <option value="brak_odpowiedzi">Brak odpowiedzi</option>
+          <option value="odpowiedź_negatywna">Odpowiedź negatywna</option>
+          <option value="w_rozmowie">W rozmowie</option>
+          <option value="demo_umówione">Demo umówione</option>
+          <option value="klient_płacący">Klient płacący</option>
+          <option value="odrzucił_po_demo">Odrzucił po demo</option>
+        </select>
+        <select id="filter-variant" onchange="renderTable()" style="width:auto; flex:none; font-size:13px; padding:7px 12px;">
+          <option value="">Wszystkie warianty</option>
+          <option value="A">Wariant A — Sanepid</option>
+          <option value="B">Wariant B — Czas personelu</option>
+          <option value="C">Wariant C — Rotacja personelu</option>
+          <option value="D">Wariant D — Wielolokalność</option>
+          <option value="E">Wariant E — Pewność przed kontrolą</option>
+          <option value="F">Wariant F — Prowokacyjny</option>
+          <option value="G">Wariant G — Kara finansowa</option>
+        </select>
+        <input id="filter-search" oninput="renderTable()" placeholder="🔍 Szukaj lokalu..." style="width:200px; font-size:13px; padding:7px 12px;">
+        <select id="sort-field" onchange="renderTable()" style="width:auto; flex:none; font-size:13px; padding:7px 12px;">
+          <option value="date_desc">Data ↓</option>
+          <option value="date_asc">Data ↑</option>
+          <option value="status">Status</option>
+          <option value="name">Nazwa</option>
+          <option value="city">Miasto</option>
+        </select>
+      </div>
+
+      <!-- TABLE -->
+      <div style="background:white; border-radius:12px; border:1px solid var(--border); overflow:hidden; overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Lokal</th>
+              <th class="hide-mobile">Instagram</th>
+              <th class="hide-mobile">Miasto</th>
+              <th class="hide-mobile">Wariant</th>
+              <th>Status</th>
+              <th class="hide-mobile">Data DM</th>
+              <th class="hide-mobile">Follow-up</th>
+              <th>Akcje</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+          </tbody>
+        </table>
+        <div id="empty-state" style="display:none; text-align:center; padding:48px; color:var(--slate);">
+          <div style="font-size:40px; margin-bottom:12px;">📭</div>
+          <div style="font-weight:600; margin-bottom:4px;">Brak lokali</div>
+          <div style="font-size:13px;">Dodaj pierwszy lokal klikając "+ Dodaj lokal"</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS TAB -->
+    <div id="view-stats" style="display:none;">
+      <div style="background:white; border-radius:12px; border:1px solid var(--border); overflow:hidden; margin-bottom:16px;">
+        <div style="padding:16px 20px; border-bottom:1px solid var(--border);">
+          <div style="font-weight:700; font-size:15px;">Skuteczność per wariant wiadomości</div>
+          <div style="font-size:12px; color:var(--slate); margin-top:2px;">Zielone = najlepszy wariant · Czerwone = najgorszy</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="conversion-table">
+            <thead>
+              <tr>
+                <th>Wariant</th>
+                <th>Wysłano</th>
+                <th>Odpowiedzi</th>
+                <th>% Odpowiedzi</th>
+                <th>Demo</th>
+                <th>% Demo</th>
+                <th>Płacący</th>
+                <th>% Płacący</th>
+              </tr>
+            </thead>
+            <tbody id="stats-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Follow-ups today -->
+      <div style="background:white; border-radius:12px; border:1px solid var(--border); overflow:hidden;">
+        <div style="padding:16px 20px; border-bottom:1px solid var(--border);">
+          <div style="font-weight:700; font-size:15px;">⏰ Follow-upy na dziś</div>
+        </div>
+        <div id="followups-today" style="padding:16px;">
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL DODAWANIA/EDYCJI -->
+<div id="modal" class="modal-overlay" style="display:none;">
+  <div class="modal">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <div style="font-weight:700; font-size:18px;" id="modal-title">Dodaj lokal</div>
+      <button onclick="closeModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--slate);">✕</button>
+    </div>
+    <div style="display:grid; gap:12px;">
+      <div>
+        <label class="section-header">Nazwa lokalu *</label>
+        <input id="f-name" placeholder="np. Restauracja Złoty Karp" required>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label class="section-header">Instagram (@handle) *</label>
+          <input id="f-instagram" placeholder="@nazwalokal">
+        </div>
+        <div>
+          <label class="section-header">Miasto</label>
+          <input id="f-city" placeholder="np. Gdańsk">
+        </div>
+      </div>
+      <div>
+        <label class="section-header">Segment</label>
+        <select id="f-segment">
+          <option value="restauracja_niezależna">Restauracja niezależna</option>
+          <option value="sieć">Sieć</option>
+          <option value="hotel">Hotel</option>
+          <option value="catering">Catering</option>
+          <option value="bistro">Bistro</option>
+          <option value="fast_food">Fast food</option>
+          <option value="inne">Inne</option>
+        </select>
+      </div>
+      <div>
+        <label class="section-header">Wariant wiadomości *</label>
+        <select id="f-variant">
+          <option value="A">Wariant A — Sanepid</option>
+          <option value="B">Wariant B — Czas personelu</option>
+          <option value="C">Wariant C — Rotacja personelu</option>
+          <option value="D">Wariant D — Wielolokalność</option>
+          <option value="E">Wariant E — Pewność przed kontrolą</option>
+          <option value="F">Wariant F — Prowokacyjny</option>
+          <option value="G">Wariant G — Kara finansowa</option>
+        </select>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div>
+          <label class="section-header">Data wysłania DM</label>
+          <input id="f-date" type="date">
+        </div>
+        <div>
+          <label class="section-header">Data follow-upu</label>
+          <input id="f-followup" type="date">
+        </div>
+      </div>
+      <div>
+        <label class="section-header">Status</label>
+        <select id="f-status">
+          <option value="wysłano">Wysłano</option>
+          <option value="brak_odpowiedzi">Brak odpowiedzi</option>
+          <option value="odpowiedź_negatywna">Odpowiedź negatywna</option>
+          <option value="w_rozmowie">W rozmowie</option>
+          <option value="demo_umówione">Demo umówione</option>
+          <option value="klient_płacący">Klient płacący</option>
+          <option value="odrzucił_po_demo">Odrzucił po demo</option>
+        </select>
+      </div>
+      <div>
+        <label class="section-header">Notatki</label>
+        <textarea id="f-notes" rows="3" placeholder="Dodatkowe informacje o lokalu, rozmowie..."></textarea>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:20px; justify-content:flex-end;">
+      <button class="btn-secondary" onclick="closeModal()">Anuluj</button>
+      <button class="btn-primary" onclick="saveEntry()">Zapisz</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIMIT SETTINGS MODAL -->
+<div id="limit-modal" class="modal-overlay" style="display:none;">
+  <div class="modal" style="max-width:320px;">
+    <div style="font-weight:700; font-size:18px; margin-bottom:16px;">⚙️ Dzienny limit DM</div>
+    <div>
+      <label class="section-header">Limit na dzień</label>
+      <input id="limit-input" type="number" min="1" max="50" value="3">
+    </div>
+    <div style="font-size:12px; color:var(--slate); margin-top:8px;">Zalecane: tydz. 1-2 → 3/dzień · tydz. 3-4 → 5/dzień · po mies. → 8/dzień</div>
+    <div style="display:flex; gap:8px; margin-top:16px; justify-content:flex-end;">
+      <button class="btn-secondary" onclick="document.getElementById('limit-modal').style.display='none'">Anuluj</button>
+      <button class="btn-primary" onclick="saveLimit()">Zapisz</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTES MODAL -->
+<div id="notes-modal" class="modal-overlay" style="display:none;">
+  <div class="modal" style="max-width:420px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div style="font-weight:700; font-size:18px;" id="notes-modal-title">Notatki</div>
+      <button onclick="document.getElementById('notes-modal').style.display='none'" style="background:none; border:none; font-size:20px; cursor:pointer;">✕</button>
+    </div>
+    <div id="notes-modal-content" style="font-size:14px; color:var(--dark); line-height:1.6; white-space:pre-wrap;"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const VARIANTS = {
+  A: 'A — Sanepid',
+  B: 'B — Czas personelu',
+  C: 'C — Rotacja personelu',
+  D: 'D — Wielolokalność',
+  E: 'E — Pewność przed kontrolą',
+  F: 'F — Prowokacyjny',
+  G: 'G — Kara finansowa'
+};
+
+const VARIANT_TEXTS = {
+  A: 'Szczera obserwacja: większość lokali które znam ma segregator z HACCP którego nikt nie prowadzi na bieżąco — i modli się żeby Sanepid nie przyszedł akurat dziś. Zbudowałem coś co to zmienia. Macie minutę?',
+  B: '10 sekund — tyle zajmuje wpis temperatury w narzędziu które zbudowałem dla gastronomii. Kucharz z mokrymi rękami, telefon w kieszeni, gotowe. Ciekawi was?',
+  C: 'Nowy pracownik w kuchni i dokumentacja HACCP leży — zna to każdy lokal. Zbudowałem aplikację która rozwiązuje ten problem bez szkoleń i bez papieru. Macie minutę?',
+  D: 'Kilka lokalizacji, jeden właściciel, dokumentacja HACCP w każdej z osobna — to potrafi być koszmar. Zbudowałem narzędzie które to ogarnia z jednego miejsca. Pokazać jak?',
+  E: 'Sanepid wchodzi bez zapowiedzi. Zbudowałem aplikację dla gastronomii żeby {NAZWA_LOKALU} miało pełną dokumentację HACCP gotową zawsze — nie tylko przed kontrolą. Ciekawi was?',
+  F: 'Szczere pytanie do {NAZWA_LOKALU}: kiedy ostatnio ktoś naprawdę wypełnił kartę HACCP na bieżąco, a nie "uzupełnił" przed kontrolą? Mam coś co to zmienia. Macie 2 minuty?',
+  G: 'Mandat Sanepidu to minimum 1000 zł, segregator z zaległościami to pewny problem. Widzę że {NAZWA_LOKALU} dba o jakość — szkoda żeby dokumentacja HACCP była słabym ogniwem. Pokazać jak to naprawić?'
+};
+
+const STATUS_BADGES = {
+  'wysłano': 'badge-sent',
+  'brak_odpowiedzi': 'badge-no-reply',
+  'odpowiedź_negatywna': 'badge-negative',
+  'w_rozmowie': 'badge-talking',
+  'demo_umówione': 'badge-demo',
+  'klient_płacący': 'badge-paying',
+  'odrzucił_po_demo': 'badge-rejected'
+};
+
+const STATUS_LABELS = {
+  'wysłano': 'Wysłano',
+  'brak_odpowiedzi': 'Brak odp.',
+  'odpowiedź_negatywna': 'Negatywna',
+  'w_rozmowie': 'W rozmowie',
+  'demo_umówione': 'Demo ✓',
+  'klient_płacący': '💰 Klient',
+  'odrzucił_po_demo': 'Odrzucił'
+};
+
+let entries = JSON.parse(localStorage.getItem('haccp_outreach') || '[]');
+let editingId = null;
+let currentTab = 'list';
+
+function save() {
+  localStorage.setItem('haccp_outreach', JSON.stringify(entries));
+}
+
+function getLimit() {
+  return parseInt(localStorage.getItem('haccp_daily_limit') || '3');
+}
+
+function getTodayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(id = null) {
+  editingId = id;
+  const modal = document.getElementById('modal');
+  modal.style.display = 'flex';
+  document.getElementById('modal-title').textContent = id ? 'Edytuj lokal' : 'Dodaj lokal';
+
+  if (id) {
+    const e = entries.find(x => x.id === id);
+    document.getElementById('f-name').value = e.name || '';
+    document.getElementById('f-instagram').value = e.instagram || '';
+    document.getElementById('f-city').value = e.city || '';
+    document.getElementById('f-segment').value = e.segment || 'restauracja_niezależna';
+    document.getElementById('f-variant').value = e.variant || 'A';
+    document.getElementById('f-date').value = e.date || getTodayStr();
+    document.getElementById('f-followup').value = e.followup || '';
+    document.getElementById('f-status').value = e.status || 'wysłano';
+    document.getElementById('f-notes').value = e.notes || '';
+  } else {
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-instagram').value = '';
+    document.getElementById('f-city').value = '';
+    document.getElementById('f-segment').value = 'restauracja_niezależna';
+    document.getElementById('f-variant').value = 'G';
+    document.getElementById('f-date').value = getTodayStr();
+    document.getElementById('f-followup').value = '';
+    document.getElementById('f-status').value = 'wysłano';
+    document.getElementById('f-notes').value = '';
+  }
+}
+
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+  editingId = null;
+}
+
+function saveEntry() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('Podaj nazwę lokalu'); return; }
+
+  const entry = {
+    id: editingId || Date.now().toString(),
+    name,
+    instagram: document.getElementById('f-instagram').value.trim(),
+    city: document.getElementById('f-city').value.trim(),
+    segment: document.getElementById('f-segment').value,
+    variant: document.getElementById('f-variant').value,
+    date: document.getElementById('f-date').value,
+    followup: document.getElementById('f-followup').value,
+    status: document.getElementById('f-status').value,
+    notes: document.getElementById('f-notes').value.trim(),
+  };
+
+  if (editingId) {
+    const idx = entries.findIndex(x => x.id === editingId);
+    entries[idx] = entry;
+  } else {
+    entries.unshift(entry);
+  }
+
+  save();
+  closeModal();
+  renderAll();
+}
+
+function deleteEntry(id) {
+  if (!confirm('Usunąć ten lokal?')) return;
+  entries = entries.filter(x => x.id !== id);
+  save();
+  renderAll();
+}
+
+function updateStatus(id, status) {
+  const idx = entries.findIndex(x => x.id === id);
+  if (idx >= 0) {
+    entries[idx].status = status;
+    save();
+    renderAll();
+  }
+}
+
+// ============================================================
+// RENDER TABLE
+// ============================================================
+function renderTable() {
+  const filterStatus = document.getElementById('filter-status').value;
+  const filterVariant = document.getElementById('filter-variant').value;
+  const filterSearch = document.getElementById('filter-search').value.toLowerCase();
+  const sortField = document.getElementById('sort-field').value;
+
+  let filtered = entries.filter(e => {
+    if (filterStatus && e.status !== filterStatus) return false;
+    if (filterVariant && e.variant !== filterVariant) return false;
+    if (filterSearch && !e.name.toLowerCase().includes(filterSearch) && !e.instagram.toLowerCase().includes(filterSearch)) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    if (sortField === 'date_desc') return (b.date || '').localeCompare(a.date || '');
+    if (sortField === 'date_asc') return (a.date || '').localeCompare(b.date || '');
+    if (sortField === 'status') return (a.status || '').localeCompare(b.status || '');
+    if (sortField === 'name') return (a.name || '').localeCompare(b.name || '');
+    if (sortField === 'city') return (a.city || '').localeCompare(b.city || '');
+    return 0;
+  });
+
+  const tbody = document.getElementById('table-body');
+  const empty = document.getElementById('empty-state');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = filtered.map(e => `
+    <tr>
+      <td>
+        <div style="font-weight:600; font-size:13px;">${escHtml(e.name)}</div>
+        <div style="font-size:11px; color:var(--slate);">${escHtml(e.segment?.replace(/_/g,' ') || '')}</div>
+        ${e.notes ? `<button onclick="showNotes('${e.id}')" style="font-size:10px; color:var(--blue); background:none; border:none; cursor:pointer; padding:0; margin-top:2px;">📝 notatki</button>` : ''}
+      </td>
+      <td class="hide-mobile mono" style="font-size:12px; color:var(--blue);">${escHtml(e.instagram || '—')}</td>
+      <td class="hide-mobile" style="font-size:12px;">${escHtml(e.city || '—')}</td>
+      <td class="hide-mobile"><span style="font-size:11px; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:6px; font-weight:600;">${escHtml(e.variant || '—')}</span></td>
+      <td>
+        <select class="inline-select ${STATUS_BADGES[e.status] || ''}" onchange="updateStatus('${e.id}', this.value)" style="font-size:12px; font-weight:600; border-radius:9999px; padding:3px 8px; border:none; cursor:pointer;">
+          ${Object.entries(STATUS_LABELS).map(([k,v]) => `<option value="${k}" ${e.status===k?'selected':''}>${v}</option>`).join('')}
+        </select>
+      </td>
+      <td class="hide-mobile" style="font-size:12px; color:var(--slate);">${e.date || '—'}</td>
+      <td class="hide-mobile" style="font-size:12px; color:${e.followup && e.followup <= getTodayStr() ? '#DC2626' : 'var(--slate)'}; font-weight:${e.followup && e.followup <= getTodayStr() ? '600' : '400'};">${e.followup || '—'}</td>
+      <td>
+        <div style="display:flex; gap:4px;">
+          <button class="btn-edit" onclick="openModal('${e.id}')">✏️</button>
+          <button class="btn-danger" onclick="deleteEntry('${e.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showNotes(id) {
+  const e = entries.find(x => x.id === id);
+  if (!e) return;
+  document.getElementById('notes-modal-title').textContent = e.name;
+  document.getElementById('notes-modal-content').textContent = e.notes;
+  document.getElementById('notes-modal').style.display = 'flex';
+}
+
+// ============================================================
+// STATS
+// ============================================================
+function renderStats() {
+  // Top stats
+  const total = entries.length;
+  const replies = entries.filter(e => ['w_rozmowie','demo_umówione','klient_płacący'].includes(e.status)).length;
+  const demos = entries.filter(e => ['demo_umówione','klient_płacący'].includes(e.status)).length;
+  const paying = entries.filter(e => e.status === 'klient_płacący').length;
+  const talking = entries.filter(e => e.status === 'w_rozmowie').length;
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-replies').textContent = replies;
+  document.getElementById('stat-replies-pct').textContent = total ? `${Math.round(replies/total*100)}% odpowiedzi` : '0%';
+  document.getElementById('stat-demos').textContent = demos;
+  document.getElementById('stat-demos-pct').textContent = total ? `${Math.round(demos/total*100)}% dem` : '0%';
+  document.getElementById('stat-paying').textContent = paying;
+  document.getElementById('stat-paying-pct').textContent = total ? `${Math.round(paying/total*100)}% konwersja` : '0%';
+  document.getElementById('stat-talking').textContent = talking;
+
+  // Daily counter
+  const today = getTodayStr();
+  const todayCount = entries.filter(e => e.date === today).length;
+  const limit = getLimit();
+  document.getElementById('today-count').textContent = todayCount;
+  document.getElementById('daily-limit-display').textContent = limit;
+  const pct = Math.min(100, Math.round(todayCount / limit * 100));
+  document.getElementById('daily-bar').style.width = pct + '%';
+
+  // Variant stats table
+  const variantStats = {};
+  Object.keys(VARIANTS).forEach(v => {
+    variantStats[v] = { sent: 0, replies: 0, demos: 0, paying: 0 };
+  });
+  entries.forEach(e => {
+    if (!variantStats[e.variant]) return;
+    variantStats[e.variant].sent++;
+    if (['w_rozmowie','demo_umówione','klient_płacący'].includes(e.status)) variantStats[e.variant].replies++;
+    if (['demo_umówione','klient_płacący'].includes(e.status)) variantStats[e.variant].demos++;
+    if (e.status === 'klient_płacący') variantStats[e.variant].paying++;
+  });
+
+  // Find best/worst by reply rate (min 1 sent)
+  const withData = Object.entries(variantStats).filter(([,v]) => v.sent > 0);
+  let bestKey = null, worstKey = null;
+  if (withData.length > 1) {
+    const sorted = withData.sort((a,b) => (b[1].replies/b[1].sent) - (a[1].replies/a[1].sent));
+    bestKey = sorted[0][0];
+    worstKey = sorted[sorted.length-1][0];
+  }
+
+  const statsBody = document.getElementById('stats-body');
+  statsBody.innerHTML = Object.entries(variantStats).map(([k, v]) => {
+    const rPct = v.sent ? Math.round(v.replies/v.sent*100) : 0;
+    const dPct = v.sent ? Math.round(v.demos/v.sent*100) : 0;
+    const pPct = v.sent ? Math.round(v.paying/v.sent*100) : 0;
+    const rowClass = k === bestKey ? 'best-row' : k === worstKey ? 'worst-row' : '';
+    const badge = k === bestKey ? '🏆' : k === worstKey ? '⚠️' : '';
+    return `<tr class="${rowClass}">
+      <td style="font-weight:600; font-size:13px;">${badge} ${escHtml(VARIANTS[k])}</td>
+      <td style="font-weight:700;">${v.sent}</td>
+      <td>${v.replies}</td>
+      <td style="color:${rPct>20?'#059669':rPct>10?'#D97706':'#64748B'}; font-weight:600;">${rPct}%</td>
+      <td>${v.demos}</td>
+      <td style="color:${dPct>10?'#059669':'#64748B'}; font-weight:600;">${dPct}%</td>
+      <td>${v.paying}</td>
+      <td style="color:${pPct>5?'#7C3AED':'#64748B'}; font-weight:600;">${pPct}%</td>
+    </tr>`;
+  }).join('');
+
+  // Follow-ups today
+  const followupsDiv = document.getElementById('followups-today');
+  const todayFollowups = entries.filter(e => e.followup === today);
+  const overdueFollowups = entries.filter(e => e.followup && e.followup < today && !['klient_płacący','odpowiedź_negatywna','odrzucił_po_demo'].includes(e.status));
+
+  if (todayFollowups.length === 0 && overdueFollowups.length === 0) {
+    followupsDiv.innerHTML = '<div style="color:var(--slate); font-size:13px; text-align:center; padding:16px;">Brak follow-upów na dziś 🎉</div>';
+  } else {
+    followupsDiv.innerHTML = [
+      ...overdueFollowups.map(e => `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
+        <div><span style="color:#DC2626; font-weight:700; font-size:11px; text-transform:uppercase;">ZALEGŁE</span> <span style="font-weight:600;">${escHtml(e.name)}</span> <span style="color:var(--slate); font-size:12px;">${escHtml(e.instagram||'')}</span></div>
+        <button class="btn-edit" onclick="openModal('${e.id}')">✏️</button>
+      </div>`),
+      ...todayFollowups.map(e => `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
+        <div><span style="color:#059669; font-weight:700; font-size:11px; text-transform:uppercase;">DZIŚ</span> <span style="font-weight:600;">${escHtml(e.name)}</span> <span style="color:var(--slate); font-size:12px;">${escHtml(e.instagram||'')}</span></div>
+        <button class="btn-edit" onclick="openModal('${e.id}')">✏️</button>
+      </div>`)
+    ].join('');
+  }
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('view-list').style.display = tab === 'list' ? 'block' : 'none';
+  document.getElementById('view-stats').style.display = tab === 'stats' ? 'block' : 'none';
+  document.getElementById('tab-list').className = tab === 'list' ? 'tab-active' : 'tab-inactive';
+  document.getElementById('tab-stats').className = tab === 'stats' ? 'tab-active' : 'tab-inactive';
+  document.getElementById('tab-list').style.cssText += '; padding:8px 20px; border-radius:8px; font-weight:600; font-size:14px; border:none; cursor:pointer;';
+  document.getElementById('tab-stats').style.cssText += '; padding:8px 20px; border-radius:8px; font-weight:600; font-size:14px; border:none; cursor:pointer;';
+}
+
+// ============================================================
+// LIMIT SETTINGS
+// ============================================================
+function openLimitSettings() {
+  document.getElementById('limit-input').value = getLimit();
+  document.getElementById('limit-modal').style.display = 'flex';
+}
+
+function saveLimit() {
+  const val = parseInt(document.getElementById('limit-input').value);
+  if (val > 0) {
+    localStorage.setItem('haccp_daily_limit', val);
+    document.getElementById('limit-modal').style.display = 'none';
+    renderAll();
+  }
+}
+
+// ============================================================
+// CSV EXPORT
+// ============================================================
+function exportCSV() {
+  const headers = ['Nazwa','Instagram','Miasto','Segment','Wariant','Data DM','Status','Follow-up','Notatki'];
+  const rows = entries.map(e => [
+    e.name, e.instagram, e.city, e.segment, VARIANTS[e.variant]||e.variant,
+    e.date, e.status, e.followup||'', e.notes?.replace(/\n/g,' ')||''
+  ].map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `haccp-outreach-${getTodayStr()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function renderAll() {
+  renderStats();
+  renderTable();
+}
+
+// Close modals on overlay click
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+document.getElementById('limit-modal').addEventListener('click', function(e) {
+  if (e.target === this) document.getElementById('limit-modal').style.display = 'none';
+});
+document.getElementById('notes-modal').addEventListener('click', function(e) {
+  if (e.target === this) document.getElementById('notes-modal').style.display = 'none';
+});
+
+renderAll();
+</script>
+</body>
+</html>
