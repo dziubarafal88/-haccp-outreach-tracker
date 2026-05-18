@@ -114,7 +114,7 @@
     </div>
 
     <!-- SECOND ROW STATS -->
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:20px;">
       <div class="stat-card">
         <div class="section-header">Klienci płacący</div>
         <div style="font-size:32px; font-weight:700; color:#7C3AED;" id="stat-paying">0</div>
@@ -123,6 +123,11 @@
       <div class="stat-card">
         <div class="section-header">W rozmowie</div>
         <div style="font-size:32px; font-weight:700; color:#D97706;" id="stat-talking">0</div>
+      </div>
+      <div class="stat-card" style="border-color:#FECDD3;">
+        <div class="section-header">Negatywne / Odrzuceni</div>
+        <div style="font-size:32px; font-weight:700; color:#DC2626;" id="stat-negative">0</div>
+        <div style="font-size:12px; color:var(--slate);" id="stat-negative-pct">0%</div>
       </div>
     </div>
 
@@ -574,6 +579,10 @@ function renderStats() {
   document.getElementById('stat-paying').textContent = paying;
   document.getElementById('stat-paying-pct').textContent = total ? `${Math.round(paying/total*100)}% konwersja` : '0%';
   document.getElementById('stat-talking').textContent = talking;
+
+  const negative = entries.filter(e => ['odpowiedź_negatywna','odrzucił_po_demo'].includes(e.status)).length;
+  document.getElementById('stat-negative').textContent = negative;
+  document.getElementById('stat-negative-pct').textContent = total ? `${Math.round(negative/total*100)}% wysłanych` : '0%';
 
   // Daily counter
   const today = getTodayStr();
